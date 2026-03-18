@@ -42,15 +42,30 @@ SandboxOS includes a built-in AI coding agent powered by Google Gemini. The agen
 pip install google-genai
 
 # Set your API key (free at https://aistudio.google.com/apikey)
+# Option 1: Create a .env file in the project root
+echo 'GEMINI_API_KEY=your_key_here' > .env
+
+# Option 2: Export it
 export GEMINI_API_KEY=your_key_here
+
+# Start SandboxOS with network enabled (required for Gemini API)
+python3 main.py --allow-net
 
 # Inside SandboxOS:
 agent chat
 ```
 
-The agent has 6 tools: `read_file`, `write_file`, `create_directory`, `list_directory`, `run_python`, `delete_file`. All operations go through the sandboxed filesystem — the agent cannot touch the host system. Scripts it writes and runs are subject to the full security stack: import blocking, setrlimit quotas, and audit logging.
+The agent has 6 tools: `read_file`, `write_file`, `create_directory`, `list_directory`, `run_python`, `delete_file`. All file/process operations go through the sandbox — the agent cannot touch the host system. Scripts it writes are subject to the full security stack: import blocking, setrlimit quotas, and audit logging.
 
-**Example task:** *"Create a calculator module with add, subtract, multiply, divide. Write unit tests. Run them and fix any failures."*
+> **Note:** `agent chat` requires network access for Gemini API calls. Start with `--allow-net`. Agent-written scripts are still fully sandboxed — network is only used for the LLM API, not by agent code.
+
+> **Cost:** Each `agent chat` turn may use up to 20 Gemini API calls (tool-use loop). Gemini Flash free tier allows ~1500 requests/day.
+
+**Try this demo task:**
+```
+> Create a todo list CLI app with add, list, and done commands.
+  Write tests for each command. Run the tests and fix any failures.
+```
 
 
 1. **Path containment** — all file operations resolve to the sandbox root, `../` traversal is caught

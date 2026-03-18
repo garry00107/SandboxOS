@@ -28,6 +28,33 @@ except ImportError:
     HAS_GEMINI = False
 
 
+def _load_env_file():
+    """Load .env file if it exists (no external deps needed)."""
+    env_paths = [
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"),
+        os.path.expanduser("~/.sandboxos/.env"),
+    ]
+    for env_path in env_paths:
+        if os.path.exists(env_path):
+            try:
+                with open(env_path) as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and not line.startswith("#") and "=" in line:
+                            key, value = line.split("=", 1)
+                            key = key.strip()
+                            value = value.strip().strip('"').strip("'")
+                            if key and value and key not in os.environ:
+                                os.environ[key] = value
+                return True
+            except OSError:
+                pass
+    return False
+
+# Auto-load .env on import
+_load_env_file()
+
+
 # ─── Tool Functions ──────────────────────────────────────────────────────────
 
 def _build_tools():
@@ -287,7 +314,9 @@ class GeminiAgent:
             return False, (
                 "GEMINI_API_KEY not set.\n"
                 "Get a free key at https://aistudio.google.com/apikey\n"
-                "Then: export GEMINI_API_KEY=your_key_here"
+                "Then either:\n"
+                "  1. Create a .env file: echo 'GEMINI_API_KEY=your_key' > .env\n"
+                "  2. Or export it: export GEMINI_API_KEY=your_key"
             )
 
         try:
@@ -408,6 +437,21 @@ def run_interactive(filesystem, process_manager, audit=None, api_key=None):
     print(f"  {bold('🤖 SandboxOS AI Agent')}")
     print(f"  {dim('Powered by Gemini Flash 2.0')}")
     horizontal_line()
+
+    # Check if network guard is blocking (main process monkey-patching)
+    try:
+        import socket
+        socket.socket  # Just checking if it's been replaced
+        # If NetworkGuard is active, socket.socket will raise on instantiation
+        # but we need to actually test it
+        test_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        test_sock.close()
+    except Exception:
+        print(f"  {yellow('⚠️')}  Network guard is active in the main process.")
+        print(f"  {dim('Gemini API calls require network access.')}")
+        print(f"  {dim('Restart with: python3 main.py --allow-net --no-boot')}")
+        print()
+        return
 
     agent = GeminiAgent(filesystem, process_manager, audit)
     ok, msg = agent.initialize(api_key)
