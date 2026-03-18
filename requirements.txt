@@ -1,9 +1,1 @@
-# SandboxOS — Requirements
-#
-# SandboxOS is built entirely with Python standard library.
-# No external dependencies are required.
-#
-# Python 3.8+ is recommended.
-#
-# Optional (not required):
-# rich>=13.0.0    # Enhanced terminal formatting (graceful fallback if missing)
+google-genai>=1.0.0

@@ -598,6 +598,7 @@ class SandboxShell:
                 ("exec <cmd>", "Execute whitelisted command"),
             ],
             "🤖 Agent Commands": [
+                ("agent chat", "Start AI agent (Gemini Flash 2.0)"),
                 ("agent run <script.py>", "Run an AI agent script"),
                 ("agent list", "List agent executions"),
                 ("agent log", "Show agent log"),
@@ -699,7 +700,7 @@ class SandboxShell:
     def _cmd_agent(self, args):
         """Agent management commands."""
         if not args:
-            print(f"  Usage: agent <run|list|log|example|output> [args]")
+            print(f"  Usage: agent <run|chat|list|log|example|output> [args]")
             return
 
         subcmd = args[0]
@@ -754,6 +755,12 @@ class SandboxShell:
                         print(red(info['error']))
             except ValueError:
                 error_msg(f"agent output: invalid ID: {args[1]}")
+
+        elif subcmd == "chat":
+            # Launch interactive Gemini agent
+            from gemini_agent import run_interactive
+            api_key = self.env.get("GEMINI_API_KEY") or os.environ.get("GEMINI_API_KEY")
+            run_interactive(self.fs, self.pm, audit=self.audit, api_key=api_key)
 
         else:
             error_msg(f"agent: unknown subcommand '{subcmd}'")

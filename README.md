@@ -33,9 +33,25 @@ python3 main.py --reset      # Wipe sandbox
 python3 main.py --allow-net  # Enable network (use with caution)
 ```
 
-## How It Works
+## AI Agent (Gemini Flash 2.0)
 
-SandboxOS creates an isolated filesystem at `~/.sandboxos/root/` and runs an interactive shell with 33 built-in commands. AI agents execute inside this sandbox with:
+SandboxOS includes a built-in AI coding agent powered by Google Gemini. The agent can create files, run Python scripts, and iterate on code — all sandboxed.
+
+```bash
+# Install the dependency
+pip install google-genai
+
+# Set your API key (free at https://aistudio.google.com/apikey)
+export GEMINI_API_KEY=your_key_here
+
+# Inside SandboxOS:
+agent chat
+```
+
+The agent has 6 tools: `read_file`, `write_file`, `create_directory`, `list_directory`, `run_python`, `delete_file`. All operations go through the sandboxed filesystem — the agent cannot touch the host system. Scripts it writes and runs are subject to the full security stack: import blocking, setrlimit quotas, and audit logging.
+
+**Example task:** *"Create a calculator module with add, subtract, multiply, divide. Write unit tests. Run them and fix any failures."*
+
 
 1. **Path containment** — all file operations resolve to the sandbox root, `../` traversal is caught
 2. **Import blocking** — 19 dangerous Python modules are intercepted at import time
